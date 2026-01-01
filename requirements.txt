@@ -1,0 +1,29 @@
+# Core Dependencies
+python-dotenv==1.0.0
+pandas>=2.2.0
+PyYAML==6.0.1
+
+# LangGraph & LangChain
+langgraph>=0.2.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+
+# HuggingFace
+huggingface-hub>=0.20.3
+transformers>=4.36.2
+torch>=2.1.2
+
+# Gradio (for HuggingFace Spaces UI)
+gradio>=4.0.0
+
+# Plotly for visualizations
+plotly>=5.18.0
+
+# Web Scraping
+google-play-scraper>=1.2.4
+requests>=2.31.0
+
+# Database (SQLite is built-in to Python)
+# sqlite3 is included with Python
+
+streamlit>=1.29.0

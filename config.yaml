@@ -1,0 +1,508 @@
+# 🎯 Review Intelligence System Configuration
+# Edit this file to customize agent behavior, prompts, and models
+
+# =============================================================================
+# MODELS CONFIGURATION
+# =============================================================================
+models:
+  # Stage 1: Classification Models
+  stage1:
+    llm1:
+      name: "Qwen/Qwen2.5-72B-Instruct"
+      temperature: 0.1
+      max_tokens: 200
+      role: "Type, Department, Priority classifier"
+    
+    llm2:
+      name: "mistralai/Mistral-7B-Instruct-v0.3"
+      temperature: 0.1
+      max_tokens: 200
+      role: "User type, Emotion, Context analyzer"
+    
+    manager:
+      name: "meta-llama/Llama-3.1-8B-Instruct"
+      temperature: 0.1
+      max_tokens: 250
+      role: "Synthesis manager"
+  
+  # Stage 2: Sentiment Models (Local BERT)
+  stage2:
+    best_model:
+      name: "cardiffnlp/twitter-roberta-base-sentiment-latest"
+      type: "local"
+      description: "Twitter-trained RoBERTa (124M tweets)"
+    
+    alternate_model:
+      name: "finiteautomata/bertweet-base-sentiment-analysis"
+      type: "local"
+      description: "BERTweet (850M tweets)"
+  
+  # Stage 3: Finalization Model
+  stage3:
+    llm3:
+      name: "meta-llama/Llama-3.1-70B-Instruct"
+      temperature: 0.1
+      max_tokens: 400
+      role: "Final synthesis and reasoning"
+
+# =============================================================================
+# AGENT PERSONAS & PROMPTS
+# =============================================================================
+personas:
+  # LLM1: Classification Expert
+  llm1:
+    name: "Classification Specialist"
+    expertise: "Expert at classifying customer reviews for theme park and attraction apps"
+    personality: "Analytical, precise, focused on categorization"
+    tone: "Professional and systematic"
+    
+    system_prompt: |
+      You are an expert at classifying customer reviews for theme park and attraction apps.
+      Your job is to analyze reviews and categorize them across multiple dimensions.
+      Be precise, analytical, and consistent in your classifications.
+    
+    categories:
+      type:
+        - complaint: "Customer reports a problem"
+        - praise: "Customer expresses satisfaction"
+        - suggestion: "Customer proposes improvement"
+        - question: "Customer asks about something"
+        - bug_report: "Technical issue described"
+      
+      department:
+        - engineering: "Technical issues, bugs, crashes"
+        - ux: "Design, usability, interface issues"
+        - support: "Customer service, help needed"
+        - business: "Pricing, policies, marketing"
+      
+      priority:
+        - critical: "Service down, major blocker"
+        - high: "Significant problem affecting use"
+        - medium: "Inconvenience but not blocking"
+        - low: "Minor issue or suggestion"
+
+  # LLM2: Psychology Expert
+  llm2:
+    name: "User Psychology Analyst"
+    expertise: "Expert at understanding customer psychology and emotional context"
+    personality: "Empathetic, insightful, human-centered"
+    tone: "Warm yet professional"
+    
+    system_prompt: |
+      You are an expert at understanding customer psychology and emotional context.
+      Your job is to analyze the human behind the review - their emotions, user type, and context.
+      Be empathetic, insightful, and focus on the human experience.
+    
+    categories:
+      user_type:
+        - new_user: "First-time or new user"
+        - regular_user: "Returning customer"
+        - power_user: "Heavy user, tech-savvy"
+        - churning_user: "Considering leaving"
+      
+      emotion:
+        - anger: "Angry, hostile tone"
+        - frustration: "Frustrated but not angry"
+        - joy: "Happy, satisfied"
+        - satisfaction: "Content, pleased"
+        - disappointment: "Let down, sad"
+        - confusion: "Unclear, needs help"
+
+  # Manager: Synthesis Expert
+  manager:
+    name: "Synthesis Manager"
+    expertise: "Expert at reconciling multiple AI analyses and making final decisions"
+    personality: "Balanced, fair, decisive"
+    tone: "Authoritative yet collaborative"
+    
+    system_prompt: |
+      You are a synthesis manager evaluating two AI analyses of the same review.
+      Your job is to validate both analyses, resolve conflicts, and make final classification decisions.
+      Be thorough, fair, and provide clear reasoning for your decisions.
+
+  # LLM3: Strategic Analyst
+  llm3:
+    name: "Strategic Decision Maker"
+    expertise: "Expert at synthesizing complex data and providing actionable recommendations"
+    personality: "Strategic, comprehensive, business-focused"
+    tone: "Executive-level, actionable"
+    
+    system_prompt: |
+      You are a final decision-making AI analyzing customer feedback for a theme park/attraction app.
+      Your job is to synthesize all previous analysis stages and provide comprehensive, actionable insights.
+      Think strategically about business impact, user satisfaction, and operational priorities.
+      Your recommendations should be clear, specific, and immediately actionable.
+
+# =============================================================================
+# CLASSIFICATION RULES
+# =============================================================================
+classification_rules:
+  # Priority escalation rules
+  priority_escalation:
+    keywords_critical:
+      - "crash"
+      - "doesn't work"
+      - "broken"
+      - "can't use"
+      - "completely unusable"
+      - "emergency"
+      - "urgent"
+    
+    keywords_high:
+      - "bug"
+      - "error"
+      - "problem"
+      - "issue"
+      - "not working"
+      - "frustrated"
+    
+    rating_thresholds:
+      critical: 1  # 1-star reviews are critical
+      high: 2      # 2-star reviews are high priority
+  
+  # Department routing rules
+  department_keywords:
+    engineering:
+      - "crash"
+      - "bug"
+      - "error"
+      - "not loading"
+      - "freeze"
+      - "slow"
+      - "technical"
+    
+    ux:
+      - "confusing"
+      - "hard to use"
+      - "can't find"
+      - "design"
+      - "layout"
+      - "interface"
+      - "navigation"
+    
+    support:
+      - "help"
+      - "contact"
+      - "customer service"
+      - "support"
+      - "assistance"
+      - "question"
+    
+    business:
+      - "price"
+      - "refund"
+      - "subscription"
+      - "billing"
+      - "expensive"
+      - "policy"
+
+  # Churn risk indicators
+  churn_indicators:
+    high_risk:
+      - "switching to"
+      - "deleted the app"
+      - "uninstalling"
+      - "terrible experience"
+      - "never again"
+      - "disappointed"
+    
+    medium_risk:
+      - "might switch"
+      - "considering alternatives"
+      - "getting worse"
+      - "used to be better"
+
+# =============================================================================
+# SENTIMENT ANALYSIS SETTINGS
+# =============================================================================
+sentiment:
+  # Agreement thresholds
+  agreement:
+    strong_threshold: 0.9  # Both models >0.9 confidence
+    weak_threshold: 0.6    # One model <0.6 confidence
+  
+  # Confidence weighting
+  confidence:
+    minimum_acceptable: 0.5
+    high_confidence: 0.8
+    very_high_confidence: 0.95
+  
+  # Override rules
+  override_rules:
+    # If rating is 1-star but sentiment is positive, flag for review
+    rating_sentiment_mismatch:
+      enabled: true
+      flag_threshold: 2  # 2-star difference
+
+# =============================================================================
+# BATCH ANALYSIS SETTINGS
+# =============================================================================
+batch_analysis:
+  # Critical issues detection
+  critical_issues:
+    max_display: 10
+    criteria:
+      - priority: "critical"
+      - sentiment: "NEGATIVE"
+      - rating: "<=2"
+      - needs_human_review: true
+  
+  # Quick wins detection
+  quick_wins:
+    max_display: 10
+    criteria:
+      - type: "suggestion"
+      - priority: ["low", "medium"]
+      - feasibility: "easy"
+  
+  # Churn risk calculation
+  churn_risk:
+    weights:
+      churning_user: 2.0
+      negative_low_rating: 1.5
+      rating_1_star: 1.0
+    
+    thresholds:
+      high: 30    # >30% is high risk
+      medium: 15  # 15-30% is medium risk
+      low: 0      # <15% is low risk
+
+# =============================================================================
+# PROMPT TEMPLATES
+# =============================================================================
+prompt_templates:
+  # Stage 1 LLM1 Prompt
+  stage1_llm1: |
+    You are an expert at classifying customer reviews for theme park and attraction apps.
+    
+    REVIEW:
+    Rating: {rating}/5
+    Text: {review_text}
+    
+    Classify this review across these dimensions:
+    
+    1. TYPE (choose ONE): {type_options}
+    2. DEPARTMENT (choose ONE): {department_options}
+    3. PRIORITY (choose ONE): {priority_options}
+    4. CONFIDENCE (0.0-1.0): How confident are you in this classification?
+    5. REASONING: Brief one-sentence explanation
+    
+    Respond ONLY in valid JSON format:
+    {{
+      "type": "complaint/praise/suggestion/question/bug_report",
+      "department": "engineering/ux/support/business",
+      "priority": "critical/high/medium/low",
+      "confidence": 0.0-1.0,
+      "reasoning": "brief explanation"
+    }}
+  
+  # Stage 1 LLM2 Prompt
+  stage1_llm2: |
+    You are an expert at understanding customer psychology and emotional context.
+    
+    REVIEW:
+    Rating: {rating}/5
+    Text: {review_text}
+    
+    Analyze the user and emotional context:
+    
+    1. USER_TYPE (choose ONE): {user_type_options}
+    2. EMOTION (choose ONE): {emotion_options}
+    3. CONTEXT (brief): What is the underlying issue or situation? 1-2 words summary
+    4. CONFIDENCE (0.0-1.0): How confident are you?
+    5. REASONING: Brief one-sentence explanation
+    
+    Respond ONLY in valid JSON format:
+    {{
+      "user_type": "new_user/regular_user/power_user/churning_user",
+      "emotion": "anger/frustration/joy/satisfaction/disappointment/confusion",
+      "context": "brief context",
+      "confidence": 0.0-1.0,
+      "reasoning": "brief explanation"
+    }}
+  
+  # Stage 1 Manager Prompt
+  stage1_manager: |
+    You are a synthesis manager evaluating two AI analyses of the same review.
+    
+    REVIEW:
+    Rating: {rating}/5
+    Text: {review_text}
+    
+    LLM1 ANALYSIS (Type/Dept/Priority):
+    {llm1_result}
+    
+    LLM2 ANALYSIS (User/Emotion/Context):
+    {llm2_result}
+    
+    Your task:
+    1. Validate both analyses
+    2. Resolve any conflicts
+    3. Make final classification decision
+    4. Provide synthesis reasoning
+    
+    Respond ONLY in valid JSON format:
+    {{
+      "final_type": "from llm1 or adjusted",
+      "final_department": "from llm1 or adjusted",
+      "final_priority": "from llm1 or adjusted",
+      "final_user_type": "from llm2 or adjusted",
+      "final_emotion": "from llm2 or adjusted",
+      "confidence": 0.0-1.0,
+      "reasoning": "synthesis explanation",
+      "conflicts_found": "any conflicts between LLM1 and LLM2, or 'none'"
+    }}
+  
+  # Stage 3 LLM3 Prompt
+  stage3_llm3: |
+    You are a final decision-making AI analyzing customer feedback for a theme park/attraction app.
+    
+    REVIEW DATA:
+    Rating: {rating}/5
+    Text: {review_text}
+    
+    STAGE 1 CLASSIFICATION:
+    - Review Type: {type}
+    - Department: {department}
+    - Priority: {priority}
+    - User Type: {user_type}
+    - Emotion: {emotion}
+    
+    STAGE 2 SENTIMENT ANALYSIS:
+    - Best Model: {best_sentiment} (confidence: {best_confidence})
+    - Alternate Model: {alt_sentiment} (confidence: {alt_confidence})
+    - Models Agreement: {agreement}
+    
+    YOUR TASK:
+    1. Review all data from both stages
+    2. Make FINAL sentiment decision (POSITIVE, NEGATIVE, or NEUTRAL)
+    3. Validate that classification and sentiment align
+    4. Provide comprehensive reasoning
+    5. Identify any conflicts between stages
+    6. Generate action recommendation
+    7. Flag if human review is needed
+    
+    Respond ONLY in valid JSON format:
+    {{
+      "final_sentiment": "POSITIVE/NEGATIVE/NEUTRAL",
+      "confidence": 0.0-1.0,
+      "reasoning": "Comprehensive explanation synthesizing all stages",
+      "validation_notes": "Does classification match sentiment?",
+      "conflicts_found": "any conflicts or 'none'",
+      "action_recommendation": "Specific action to take",
+      "needs_human_review": true/false
+    }}
+
+# =============================================================================
+# PROCESSING SETTINGS
+# =============================================================================
+processing:
+  # Batch settings
+  batch_size: 10
+  max_workers: 3
+  timeout_seconds: 30
+  retry_attempts: 3
+  
+  # Rate limiting (for HF API)
+  rate_limit:
+    requests_per_minute: 60
+    requests_per_day: 10000  # HF Pro limit
+  
+  # Logging
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+    save_logs: true
+    log_file: "processing.log"
+    
+  # Checkpointing
+  checkpoint:
+    enabled: true
+    save_after_each_stage: true
+    auto_resume: true
+
+# =============================================================================
+# DASHBOARD SETTINGS
+# =============================================================================
+dashboard:
+  # UI Configuration
+  ui:
+    title: "Review Intelligence System"
+    icon: "🎯"
+    layout: "wide"
+    theme: "light"  # light or dark
+  
+  # Chart colors
+  colors:
+    positive: "#2ca02c"
+    neutral: "#ff7f0e"
+    negative: "#d62728"
+    critical: "#d62728"
+    high: "#ff7f0e"
+    medium: "#1f77b4"
+    low: "#2ca02c"
+  
+  # Filters
+  filters:
+    enable_sentiment: true
+    enable_department: true
+    enable_priority: true
+    enable_date_range: false  # Future feature
+  
+  # Display limits
+  display:
+    max_critical_issues: 20
+    max_quick_wins: 15
+    reviews_per_page: 50
+    auto_refresh_seconds: 60
+
+# =============================================================================
+# DOMAIN-SPECIFIC CUSTOMIZATION (Theme Parks / Attractions)
+# =============================================================================
+domain:
+  name: "Theme Parks & Attractions"
+  
+  # Common features to look for
+  features:
+    - "ticket booking"
+    - "queue times"
+    - "express pass"
+    - "meal plans"
+    - "park maps"
+    - "show times"
+    - "photo pass"
+    - "virtual queue"
+    - "ride reservations"
+    - "mobile ordering"
+  
+  # Pain points to prioritize
+  pain_points:
+    high_impact:
+      - "can't book tickets"
+      - "app crashes during booking"
+      - "payment fails"
+      - "queue times wrong"
+      - "can't access tickets"
+    
+    medium_impact:
+      - "map doesn't load"
+      - "slow performance"
+      - "confusing navigation"
+      - "notifications not working"
+  
+  # Positive signals
+  positive_signals:
+    - "easy booking"
+    - "fast check-in"
+    - "helpful features"
+    - "saved time"
+    - "convenient"
+    - "great experience"
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# - Edit this file to customize agent behavior
+# - Prompts support variables in {curly_braces}
+# - Model names must match HuggingFace model IDs
+# - Temperature: 0.0 = deterministic, 1.0 = creative
+# - Changes take effect on next run (no restart needed for some settings)
